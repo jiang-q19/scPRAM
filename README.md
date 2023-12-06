@@ -1,6 +1,6 @@
 # scPRAM accurately predicts single-cell gene expression perturbation response based on attention mechanism
 
-![overview_scpram]([D:\BaiduSyncdisk\科研文件\论文\scPRAM\overview_scpram.png](https://github.com/jiang-q19/scPRAM/blob/main/overview_scpram.png))
+![overview_scpram](https://github.com/jiang-q19/scPRAM/blob/main/overview_scpram.png)
 
 ## Installation
 
