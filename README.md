@@ -50,7 +50,7 @@ This process will take approximately 5 to 10 minutes, depending on the user's co
 
 ## Quick Start
 
-Out-of-sample prediction across cell types is demonstrated here. scPRAM can be easily used through three steps: data preprocessing, model training, prediction and evaluation. See the [tutorial]([scPRAM/Tutorial/PBMC_cross_celltype_predict.ipynb at main · jiang-q19/scPRAM (github.com)](https://github.com/jiang-q19/scPRAM/blob/main/Tutorial/PBMC_cross_celltype_predict.ipynb)) for a pipeline demonstration using the PBMC data set as an example.
+Out-of-sample prediction across cell types is demonstrated here. scPRAM can be easily used through three steps: data preprocessing, model training, prediction and evaluation. See the [tutorial](https://github.com/jiang-q19/scPRAM/blob/main/Tutorial/PBMC_cross_celltype_predict.ipynb) for a pipeline demonstration using the PBMC data set as an example.
 
 ### 1. Data preprocessing
 
