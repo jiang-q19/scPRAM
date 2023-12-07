@@ -7,7 +7,7 @@
 It's prefered to create a new environment for scPRAM
 
 ```
-conda create -n scPRAM python==3.9
+conda create -n scPRAM python==3.8
 conda activate scPRAM
 ```
 
