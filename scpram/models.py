@@ -85,7 +85,7 @@ class SCPRAM(nn.Module):
         return x_hat, loss_rec, loss_kl
 
     def get_latent_adata(self, adata):
-        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        device = self.device
         x = Tensor(adata.to_df().values).to(device)
         latent_z = self.encode(x)[0].cpu().detach().numpy()
         latent_adata = sc.AnnData(X=latent_z, obs=adata.obs.copy())
@@ -118,6 +118,7 @@ class SCPRAM(nn.Module):
                 SCPRAM_loss = (0.5 * loss_rec + 0.5 * (loss_kl * self.kl_weight)).mean()
                 optim_SCPRAM.zero_grad()
                 SCPRAM_loss.backward()
+                torch.nn.utils.clip_grad_norm(self.parameters(), 10)
                 optim_SCPRAM.step()
             pbar.set_postfix(SCPRAM_loss=SCPRAM_loss.item(), recon_loss=loss_rec.mean().item(),
                              kl_loss=loss_kl.mean().item())
