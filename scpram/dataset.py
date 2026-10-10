@@ -1,6 +1,6 @@
 from torch.utils.data import Dataset, DataLoader
 import numpy as np
-import scanpy as sc
+from scipy import sparse
 
 
 class CSDataSet(Dataset):
@@ -23,16 +23,20 @@ class CSDataSet(Dataset):
 
 
 class AnnDataSet(Dataset):
-    def __init__(self, adata):
+    def __init__(self, adata, layer=None):
         '''
         Build dataset of adata
         :param adata: adata of training or testing set
         '''
-        self.data = adata.to_df().values
+        self.data = adata.X if layer is None else adata.layers[layer]
+        if sparse.issparse(self.data):
+            self.data = self.data.tocsr()
 
     def __getitem__(self, index):
         x = self.data[index, :]
-        return x
+        if sparse.issparse(x):
+            x = x.toarray()
+        return np.asarray(x, dtype=np.float32).reshape(-1)
 
     def __len__(self):
         return self.data.shape[0]
@@ -87,6 +91,8 @@ def data_loader(adata, key_dic, bz=128, cell_to_pred='CD4T'):
 
 
 if __name__ == '__main__':
+    import scanpy as sc
+
     adata = sc.read_h5ad('../data/pbmc_perturbed.h5ad')
     input_dim = adata.var.shape[0]
     cell_to_pred = 'CD4T'

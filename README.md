@@ -2,51 +2,41 @@
 
 ![overview_scpram](https://github.com/jiang-q19/scPRAM/blob/main/overview_scpram.png)
 
+## Version 0.1.0
+
+This release adds checked OT solvers, validation early stopping, batched sparse
+input handling, per-cell attention, and model checkpoints. It retains the VAE
+architecture and training loss. Prediction defaults have changed: posterior means
+and per-cell attention replace sampled latents and first-target-cell attention.
+These engineering checks do **not** establish improved biological accuracy.
+See the [migration and API guide](docs/scpram_0.1.0_migration_and_api.md) and
+[Chinese change and validation notes](docs/scpram_0.1.0_优化与验证说明_20261010.md).
+
 ## Installation
 
-It's prefered to create a new environment for scPRAM
+Use Python 3.10 or newer in a separate environment. Install an appropriate
+PyTorch build for your CPU/CUDA environment, then install the source checkout:
 
-```
-conda create -n scPRAM python==3.8
-conda activate scPRAM
-```
-
-scPRAM is available on PyPI, and could be installed using
-
-```
-# CUDA 11.6
-pip install scpram --extra-index-url https://download.pytorch.org/whl/cu116
-
-# CUDA 11.3
-pip install scpram --extra-index-url https://download.pytorch.org/whl/cu113
-
-# CUDA 10.2
-pip install scpram --extra-index-url https://download.pytorch.org/whl/cu102
-
-# CPU only
-pip install scpram --extra-index-url https://download.pytorch.org/whl/cpu
+```bash
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -e '.[plot]'
 ```
 
-Installation via Github is also provided
+For a fresh checkout:
 
-```
-git clone https://github.com/jiang-q19/scPRAM
+```bash
+git clone https://github.com/jiang-q19/scPRAM.git
 cd scPRAM
-
-# CUDA 11.6
-pip install scpram.whl --extra-index-url https://download.pytorch.org/whl/cu116
-
-# CUDA 11.3
-pip install scpram.whl --extra-index-url https://download.pytorch.org/whl/cu113
-
-# CUDA 10.2
-pip install scpram.whl --extra-index-url https://download.pytorch.org/whl/cu102
-
-# CPU only
-pip install scpram.whl --extra-index-url https://download.pytorch.org/whl/cpu
+git switch release/0.1.0
+python -m pip install -e '.[plot]'
 ```
 
-This process will take approximately 5 to 10 minutes, depending on the user's computer device and internet connectivition.
+The `plot` extra supports the evaluation plots; `notebook` installs Jupyter and
+`dev` installs testing/build tools. Do not install the historical `scpram.whl`
+in the repository to obtain this version. A GitHub update does not publish a new
+PyPI package. Original notebooks describe the historical API and settings.
 
 ## Quick Start
 
@@ -103,3 +93,39 @@ evaluate.evaluate_adata(eval_adata=eval_adata,
 ```
 
 
+
+## Validation early stopping and explicit OT settings
+
+Split only the permitted training data. Held-out target perturbations must stay
+outside training, validation, preprocessing fit, and prediction inputs.
+
+```python
+from scpram import SCPRAM, OTConfig
+
+model = SCPRAM(input_dim=train.n_vars, seed=42, device="cpu")
+history = model.train_SCPRAM(
+    train, epochs=300, batch_size=128,
+    validation_fraction=0.1, patience=20, min_delta=1e-4, seed=42,
+)
+pred = model.predict(
+    train, cell_to_pred, key_dic,
+    ot_config=OTConfig(method="emd", max_iter=1_000_000, retries=1),
+    attention_mode="cellwise", batch_size=1024,
+)
+model.save("scpram_model.pt")
+restored = SCPRAM.load("scpram_model.pt", device="cpu")
+```
+
+Early stopping monitors deterministic VAE validation loss, not perturbation
+prediction accuracy. Without validation or `patience`, old fixed-epoch calls
+remain valid. Full OT diagnostics are in `model.last_ot_diagnostics_`; essential
+prediction settings are stored in `pred.uns["scpram"]`.
+
+## Development
+
+```bash
+python -m pip install -e '.[dev,plot]'
+python -m pytest
+ruff check scpram/models.py scpram/transport.py scpram/attention.py scpram/__init__.py tests setup.py
+python -m build
+```
